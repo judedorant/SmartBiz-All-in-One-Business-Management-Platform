@@ -1,0 +1,75 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+:root {
+  --background: #f6f8fb;
+  --foreground: #162033;
+  --card: #ffffff;
+  --muted: #edf1f6;
+  --muted-foreground: #627087;
+  --border: #dfe6ee;
+  --primary: #4361ee;
+}
+.dark {
+  --background: #101521;
+  --foreground: #e9edf6;
+  --card: #182030;
+  --muted: #222c3e;
+  --muted-foreground: #a6b2c7;
+  --border: #303b50;
+  --primary: #7188ff;
+}
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --font-sans: Arial, Helvetica, sans-serif;
+}
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+button:not(:disabled),
+a {
+  cursor: pointer;
+}
+
+.smartbiz-calendar {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: var(--card);
+  --fc-neutral-bg-color: var(--muted);
+  --fc-today-bg-color: color-mix(in srgb, var(--primary) 7%, transparent);
+  --fc-button-bg-color: var(--primary);
+  --fc-button-border-color: var(--primary);
+  --fc-button-hover-bg-color: var(--primary);
+  --fc-button-hover-border-color: var(--primary);
+  --fc-button-active-bg-color: #293fcc;
+  --fc-button-active-border-color: #293fcc;
+  --fc-list-event-hover-bg-color: var(--muted);
+}
+.smartbiz-calendar .fc-toolbar-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.smartbiz-calendar .fc-button {
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+}
+@media (max-width: 640px) {
+  .smartbiz-calendar .fc-toolbar {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .smartbiz-calendar .fc-daygrid-day-number {
+    font-size: 0.75rem;
+  }
+}
