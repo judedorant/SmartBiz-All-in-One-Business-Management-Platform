@@ -4,7 +4,12 @@ import { resolve } from 'node:path';
 
 const base = process.env.SMARTBIZ_API_URL ?? 'http://localhost:8000';
 const frontend = process.env.SMARTBIZ_FRONTEND_URL ?? 'http://localhost:3000';
-const accounts = JSON.parse(await readFile(resolve(import.meta.dirname, '../backend/storage/app/private/local-accounts.json'), 'utf8'));
+const accountSource = JSON.parse(await readFile(process.env.SMARTBIZ_ACCOUNTS_FILE ?? resolve(import.meta.dirname, '../backend/storage/app/private/local-accounts.json'), 'utf8'));
+const accounts = Array.isArray(accountSource) ? accountSource : accountSource.accounts;
+assert.ok(Array.isArray(accounts) && accounts.length >= 3, 'Credentials must contain accounts for all three roles');
+for (const role of ['Admin', 'Manager', 'Staff']) {
+  assert.ok(accounts.some(account => account.role === role && typeof account.email === 'string' && typeof account.password === 'string' && account.password.length > 0), `Missing valid ${role} credentials`);
+}
 
 function session() {
   const cookies = new Map();
@@ -25,7 +30,7 @@ function session() {
 assert.equal((await fetch(`${base}/up`)).status, 200, 'Laravel health');
 assert.equal((await fetch(`${frontend}/login`)).status, 200, 'Next.js login page');
 assert.equal((await fetch(`${frontend}/dashboard`)).status, 200, 'Next.js dashboard shell');
-for (const route of ['/customers', '/customers/new', '/leads', '/leads/new', '/pipeline', '/sales', '/appointments', '/appointments/new', '/appointments/availability', '/tasks', '/tasks/new', '/automation', '/settings/integrations']) {
+for (const route of ['/customers', '/customers/new', '/leads', '/leads/new', '/pipeline', '/sales', '/appointments', '/appointments/new', '/appointments/availability', '/tasks', '/tasks/new', '/automation', '/settings/integrations', '/reports', '/users']) {
   assert.equal((await fetch(`${frontend}${route}`)).status, 200, `Frontend route ${route}`);
 }
 const anonymous = session();
@@ -49,6 +54,21 @@ for (const account of accounts) {
   assert.equal((await send('/api/v1/dashboard/access')).status, 200);
   assert.equal((await send('/api/v1/team/access')).status, account.role === 'Staff' ? 403 : 200);
   assert.equal((await send('/api/v1/admin/access')).status, account.role === 'Admin' ? 200 : 403);
+  assert.equal((await send('/api/v1/users')).status, account.role === 'Admin' ? 200 : 403);
+  for (const report of ['sales', 'customers', 'tasks', 'pipeline']) {
+    const filters = new URLSearchParams({ report, preset: 'last_30_days', timezone: 'Asia/Manila', currency: 'PHP' });
+    const preview = await send(`/api/v1/reports?${filters}`);
+    const exported = await send(`/api/v1/reports/export?${filters}`);
+    assert.equal(preview.status, account.role === 'Staff' ? 403 : 200, `${account.role} report ${report}`);
+    assert.equal(exported.status, account.role === 'Staff' ? 403 : 200, `${account.role} export ${report}`);
+    if (account.role !== 'Staff') {
+      const data = (await preview.json()).data;
+      assert.equal(data.filters.currency, 'PHP');
+      assert.match(exported.headers.get('content-type'), /text\/csv/);
+      assert.match(exported.headers.get('cache-control'), /no-store/);
+      assert.ok((await exported.text()).includes(data.title));
+    }
+  }
   for (const path of ['/api/v1/customers', '/api/v1/leads']) {
     const response = await send(path);
     assert.equal(response.status, 200, `${account.role} CRM list`);

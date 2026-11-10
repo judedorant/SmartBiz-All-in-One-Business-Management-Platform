@@ -27,7 +27,7 @@ The dependency solver selected Laravel 13.38, Sanctum 4.3, Spatie Permission 8.3
 
 ESLint 9.39.5 is pinned because the React, import, and accessibility plugins bundled with the selected Next.js config do not declare ESLint 10 compatibility. npm emits an ESLint 9 deprecation warning; upgrading the lint toolchain is tracked as tooling debt, rather than forcing incompatible peer dependencies. Vitest 3 and TypeScript 5 are retained as the tested toolchain.
 
-Laravel Boost is a development-only dependency installed as required by the generated scaffold's AGENTS.md. The API does not require a Vite build. Recharts 3.10 and its compatible React-is 19 peer power Phase 3 charts. FullCalendar 6.1.22 powers Phase 4 scheduling. Phase 6 uses Laravel’s HTTP client for Google REST APIs without additional SDK packages. Export packages remain deferred to Phase 7.
+Laravel Boost is a development-only dependency installed as required by the generated scaffold's AGENTS.md. The API does not require a Vite build. Recharts 3.10 and its compatible React-is 19 peer power Phase 3 charts. FullCalendar 6.1.22 powers Phase 4 scheduling. Phase 6 uses Laravel’s HTTP client for Google REST APIs without additional SDK packages. Phase 7 CSV exports use native PHP CSV serialization without additional packages.
 
 ## Runtime boundaries
 

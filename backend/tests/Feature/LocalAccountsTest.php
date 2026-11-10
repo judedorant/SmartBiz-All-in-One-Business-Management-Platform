@@ -43,7 +43,12 @@ class LocalAccountsTest extends TestCase
             $path = $directory.'/app/private/local-accounts.json';
             $accounts = json_decode(file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
             $this->assertCount(3, $accounts);
-            $this->assertSame(0600, fileperms($path) & 0777);
+            if (PHP_OS_FAMILY !== 'Windows') {
+                $this->assertSame(0600, fileperms($path) & 0777);
+            } else {
+                $this->assertFileIsReadable($path);
+                $this->assertFileIsWritable($path);
+            }
             $this->assertDatabaseCount('users', 3);
             foreach ($accounts as $account) {
                 $user = User::where('email', $account['email'])->firstOrFail();

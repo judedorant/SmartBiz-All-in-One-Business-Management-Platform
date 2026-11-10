@@ -73,6 +73,21 @@ it("sends canonical UTC times and the current version when editing", async () =>
   );
   expect(push).toHaveBeenCalledWith("/appointments/20");
 });
+it("returns a successful save to its modal instead of navigating", async () => {
+  const onSaved = vi.fn();
+  setup(<AppointmentForm appointment={appointment} onSaved={onSaved} />);
+  await userEvent.click(screen.getByRole("button", { name: "Save appointment" }));
+  await waitFor(() => expect(onSaved).toHaveBeenCalledWith(appointment));
+  expect(push).not.toHaveBeenCalled();
+});
+it("cancels the modal without navigating or saving", async () => {
+  const onCancel = vi.fn();
+  setup(<AppointmentForm onCancel={onCancel} />);
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  expect(onCancel).toHaveBeenCalledOnce();
+  expect(push).not.toHaveBeenCalled();
+  expect(write).not.toHaveBeenCalled();
+});
 it("reports staff scheduling conflicts without navigating away", async () => {
   vi.mocked(write).mockRejectedValue(
     new ApiError(

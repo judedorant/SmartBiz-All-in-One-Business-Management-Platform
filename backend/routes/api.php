@@ -10,18 +10,35 @@ use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\IntegrationController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\PasswordController;
+use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\TaskController;
+use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WebhookController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 
+foreach (['', 'v1'] as $passwordPrefix) {
+    Route::prefix($passwordPrefix)->middleware('throttle:api')->group(function (): void {
+        Route::post('forgot-password', [PasswordController::class, 'forgot'])->middleware('throttle:password-recovery');
+        Route::post('reset-password', [PasswordController::class, 'reset'])->middleware('throttle:password-reset');
+        Route::put('profile/change-password', [PasswordController::class, 'change'])->middleware(['auth:sanctum', 'active', 'throttle:password-change']);
+        Route::post('users/{user}/send-password-reset', [PasswordController::class, 'admin'])->whereNumber('user')->middleware(['auth:sanctum', 'active', 'throttle:password-admin']);
+    });
+}
+
 Route::prefix('v1')->name('api.v1.')->middleware('throttle:api')->group(function (): void {
     Route::post('webhooks/{endpoint}/receive', [WebhookController::class, 'receive'])->whereNumber('endpoint')->middleware('throttle:30,1')->name('webhooks.receive');
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login')->name('login');
     Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::post('users', [UserController::class, 'store'])->middleware('throttle:20,1')->name('users.store');
+        Route::put('users/{user}', [UserController::class, 'update'])->whereNumber('user')->middleware('throttle:20,1')->name('users.update');
+        Route::get('reports', [ReportController::class, 'show'])->name('reports.show');
+        Route::get('reports/export', [ReportController::class, 'export'])->middleware('throttle:10,1')->name('reports.export');
         Route::get('automations/catalog', [AutomationController::class, 'catalog'])->name('automations.catalog');
         Route::apiResource('automations', AutomationController::class)->except('show')->whereNumber('automation');
         Route::patch('automations/{automation}/active', [AutomationController::class, 'active'])->whereNumber('automation')->name('automations.active');

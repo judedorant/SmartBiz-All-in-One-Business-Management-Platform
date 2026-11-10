@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-user";
+import { PasswordForm } from "@/features/auth/password-form";
 export default function Settings() {
   const { data: user } = useUser();
   if (!user) return null;
@@ -36,9 +37,12 @@ export default function Settings() {
           ))}
         </dl>
         <p className="mt-7 border-t border-border pt-4 text-xs leading-5 text-muted-foreground">
-          Profile editing and user administration are planned for a later phase.
-          Contact your administrator for account changes.
+          Contact your administrator for profile and workspace access changes.
         </p>
+      </section>
+      <section className="space-y-5 rounded-xl border border-border bg-card p-6">
+        <h2 className="font-semibold">Change password</h2>
+        <PasswordForm mode="change" />
       </section>
       <section className="rounded-xl border border-border bg-card p-6">
         <h2 className="font-semibold">Session security</h2>

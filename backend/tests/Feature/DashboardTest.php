@@ -9,8 +9,10 @@ use App\Models\PipelineStage;
 use App\Models\Sale;
 use App\Models\Task;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\TestWith;
+use Spatie\Permission\PermissionRegistrar;
 
 class DashboardTest extends CrmTestCase
 {
@@ -24,6 +26,48 @@ class DashboardTest extends CrmTestCase
         $this->getJson('/api/v1/dashboard/summary')->assertUnauthorized();
         $this->getJson('/api/v1/dashboard/analytics')->assertUnauthorized();
         $this->actingAs(User::factory()->create(), 'web')->getJson('/api/v1/dashboard/summary')->assertForbidden();
+        $this->getJson('/api/v1/dashboard/analytics')->assertForbidden();
+    }
+
+    #[TestWith(['Admin'])]
+    #[TestWith(['Manager'])]
+    #[TestWith(['Staff'])]
+    public function test_targeted_permission_cache_reset_restores_dashboard_access_without_changing_grants(string $role): void
+    {
+        $user = $this->signIn($role);
+        $registrar = app(PermissionRegistrar::class);
+        $registrar->getPermissions();
+        $grants = DB::table('role_has_permissions')->orderBy('role_id')->orderBy('permission_id')->get()->toArray();
+        $userRoles = $user->getRoleNames()->all();
+        $cached = $registrar->getCacheStore()->get($registrar->cacheKey);
+        $cached['permissions'] = [];
+        $cached['roles'] = [];
+        $registrar->getCacheStore()->put($registrar->cacheKey, $cached, 3600);
+        $registrar->clearPermissionsCollection();
+
+        $this->assertTrue($user->getAllPermissions()->contains('name', 'dashboard.view'));
+        $this->assertFalse($user->can('dashboard.view'));
+        foreach (['summary', 'analytics'] as $endpoint) {
+            $this->getJson('/api/v1/dashboard/'.$endpoint)->assertForbidden();
+        }
+
+        $this->artisan('permission:cache-reset')->assertSuccessful();
+        foreach (['summary', 'analytics'] as $endpoint) {
+            $this->getJson('/api/v1/dashboard/'.$endpoint)->assertOk()->assertJsonPath('success', true);
+        }
+        $this->assertEquals($grants, DB::table('role_has_permissions')->orderBy('role_id')->orderBy('permission_id')->get()->toArray());
+        $this->assertSame($userRoles, $user->fresh()->getRoleNames()->all());
+        $this->getJson('/api/v1/users')->assertStatus($role === 'Admin' ? 200 : 403);
+        $this->getJson('/api/v1/reports?report=sales')->assertStatus($role === 'Staff' ? 403 : 200);
+    }
+
+    public function test_permission_cache_reset_does_not_grant_dashboard_access_to_an_account_without_a_role(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $this->actingAs(User::factory()->create(), 'web');
+        $this->artisan('permission:cache-reset')->assertSuccessful();
+        $this->getJson('/api/v1/dashboard/summary')->assertForbidden();
+        $this->getJson('/api/v1/dashboard/analytics')->assertForbidden();
     }
 
     public function test_summary_uses_real_status_cohorts_and_exact_currency_filtered_revenue(): void

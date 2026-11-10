@@ -31,10 +31,6 @@ import { authApi } from "@/features/auth/api";
 import { ApiError } from "@/lib/api";
 import { NotificationCenter } from "@/features/tasks/notification-center";
 import { cn } from "@/lib/utils";
-const future = [
-  { name: "Reports", icon: BarChart3 },
-  { name: "Users", icon: UserCog },
-];
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { data: user, isPending, error, refetch } = useUser();
   const router = useRouter();
@@ -187,6 +183,20 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               permitted: user.permissions.includes("automations.manage"),
             },
             {
+              name: "Reports",
+              icon: BarChart3,
+              path: "/reports",
+              permitted:
+                user.permissions.includes("reports.team") ||
+                user.permissions.includes("reports.all"),
+            },
+            {
+              name: "Users",
+              icon: UserCog,
+              path: "/users",
+              permitted: user.permissions.includes("users.manage"),
+            },
+            {
               name: "Tasks",
               icon: CheckSquare,
               path: "/tasks",
@@ -221,19 +231,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 {name}
               </Link>
             ))}
-          {future.map(({ name, icon: Icon }) => (
-            <div
-              key={name}
-              aria-disabled="true"
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground/65"
-            >
-              <Icon className="size-[18px]" />
-              <span className="flex-1">{name}</span>
-              <span className="text-[9px] uppercase tracking-wide">
-                Planned
-              </span>
-            </div>
-          ))}
           <Link
             href="/settings"
             onClick={() => setOpen(false)}
@@ -257,7 +254,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </p>
         </div>
         <div className="border-t border-border px-5 py-4">
-          <p className="text-xs text-muted-foreground">SmartBiz · Phase 6</p>
+          <p className="text-xs text-muted-foreground">SmartBiz · Phase 7</p>
         </div>
       </aside>
       <div className="lg:pl-64">
@@ -275,21 +272,25 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <span className="text-sm text-muted-foreground">
               Workspace <span className="mx-2 text-border">/</span>
               <span className="font-medium text-foreground">
-                {pathname.startsWith("/automation")
-                  ? "Automation"
-                  : pathname.startsWith("/tasks")
-                    ? "Tasks"
-                    : pathname.startsWith("/appointments")
-                      ? "Appointments"
-                      : pathname.startsWith("/customers")
-                        ? "Customers"
-                        : pathname.startsWith("/leads")
-                          ? "Leads"
-                          : pathname === "/pipeline"
-                            ? "Sales Pipeline"
-                            : pathname === "/settings"
-                              ? "Settings"
-                              : "Overview"}
+                {pathname.startsWith("/users")
+                  ? "Users"
+                  : pathname.startsWith("/reports")
+                    ? "Reports"
+                    : pathname.startsWith("/automation")
+                      ? "Automation"
+                      : pathname.startsWith("/tasks")
+                        ? "Tasks"
+                        : pathname.startsWith("/appointments")
+                          ? "Appointments"
+                          : pathname.startsWith("/customers")
+                            ? "Customers"
+                            : pathname.startsWith("/leads")
+                              ? "Leads"
+                              : pathname === "/pipeline"
+                                ? "Sales Pipeline"
+                                : pathname === "/settings"
+                                  ? "Settings"
+                                  : "Overview"}
               </span>
             </span>
           </div>

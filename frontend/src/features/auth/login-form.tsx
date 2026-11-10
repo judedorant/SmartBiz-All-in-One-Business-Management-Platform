@@ -11,6 +11,7 @@ import { ApiError } from "@/lib/api";
 import { userKey } from "@/hooks/use-user";
 import { loginSchema, type LoginValues } from "./schema";
 import { authApi } from "./api";
+import Link from "next/link";
 export function LoginForm() {
   const router = useRouter();
   const client = useQueryClient();
@@ -105,6 +106,12 @@ export function LoginForm() {
         )}
         {login.isPending ? "Signing in…" : "Sign in"}
       </Button>
+      <Link
+        href="/forgot-password"
+        className="block text-center text-sm text-primary hover:underline"
+      >
+        Forgot Password?
+      </Link>
       <p className="text-center text-xs leading-5 text-muted-foreground">
         Need access or help with your password?
         <br />

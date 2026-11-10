@@ -25,7 +25,7 @@ A decoupled Laravel REST API and Next.js business workspace. **Phases 1–6 are 
 - Admin workflow builder, durable triggers, queued actions, execution logs, safe retries and loop guards.
 - Signed webhooks and optional Google OAuth adapters for Gmail, Sheets and Calendar. Provider behavior is tested with simulated responses; live external delivery requires configured credentials.
 
-Reports will be introduced in Phase 7. Unavailable modules are labeled as planned. The frontend authorization guard improves navigation; Laravel enforces access on every API request.
+Phase 7 adds management reports and CSV exports. Unavailable modules are labeled as planned. The frontend authorization guard improves navigation; Laravel enforces access on every API request.
 
 ## Native development (no containers)
 
@@ -153,6 +153,10 @@ Run the existing native queue worker and scheduler for automation. `php artisan 
 
 ## Verification
 
+For the fixed October 28, 2026 QA scenario, use [QA setup](QA_SETUP_GUIDE.md), [current test results](QA_TEST_REPORT.md), [sample counts](SAMPLE_DATA_REPORT.md), [report validation](REPORT_VALIDATION.md), and [bug findings](BUG_REPORT.md). `php artisan smartbiz:qa-2026 --seed` appends identifiable fixtures to the existing demo; no existing business rows are reset. `node scripts/qa-browser.mjs` runs the desktop/mobile checks against the running demo services.
+
+For a separate populated local demo and the completed QA audit, see [sample data setup](SMARTBIZ_SAMPLE_DATA.md) and [QA results and remaining feature gaps](SMARTBIZ_QA_REPORT.md). `php artisan smartbiz:demo-setup` creates a guarded `smartbiz_demo` database without changing `.env`; `php artisan smartbiz:qa-data` reconciles its existing dashboard and reports against SQL. PHP currency is supported alongside USD/EUR/GBP; select PHP to view demo revenue.
+
 ```bash
 cd smartbiz/backend
 php artisan test --compact                 # SQLite in-memory; no MySQL required
@@ -181,4 +185,18 @@ The live smoke check uses real cookie sessions and MySQL data, verifies all role
 - [Deployment and security configuration](docs/deployment.md)
 - [Automation and integration operator guide](docs/automation.md)
 
-Phase 6 is complete. Phase 7 (reporting and exports) awaits approval.
+## User management
+
+Admins can open **Users** (`/users`) to search accounts, filter by role/status, create accounts, edit names and emails, assign one of the existing Admin/Manager/Staff roles, reset passwords, and activate/deactivate users. Managers and Staff cannot access this workspace or its API. Passwords require 12 characters with upper/lowercase letters, numbers, symbols, and confirmation; existing passwords are never displayed. Admins share initial/reset credentials privately with the affected user; no email delivery is implied.
+
+Role, status, and password changes revoke the affected account's database sessions. Admins cannot deactivate themselves or remove their own Admin role, and the last active Admin is protected. Stale changes return 409 and require reloading before another edit. Accounts are deactivated rather than deleted so existing assignments and history remain. No additional migration or package is needed.
+
+## Reports and exports (Phase 7)
+
+Admins and Managers can open **Reports** (`/reports`) for monthly recorded sales, daily customer growth, daily task creation/completion, and the current pipeline for leads created in the selected period. Staff cannot access reports or downloads. Existing resource visibility scopes apply to both the preview and export.
+
+Choose a date preset or a custom range of at most 366 days. Calendar boundaries use the browser timezone. Sales include completed entries in the selected currency and exclude voids. Pipeline estimates are not revenue. Each report explains its date and status rules above an accessible table. Periods without activity show zero values.
+
+**Download CSV** regenerates the selected report using the displayed dates, timezone, and currency. CSV files include this context and a generation timestamp; values may change if records are updated after the preview. Downloads use cookie authentication, no-store responses, export throttling, UTF-8 encoding, standard CSV quoting, and spreadsheet formula escaping. No additional packages, database migrations, or external services are needed. PDF and Excel workbook formats are not implemented.
+
+Phase 7 reporting and CSV exports are implemented.

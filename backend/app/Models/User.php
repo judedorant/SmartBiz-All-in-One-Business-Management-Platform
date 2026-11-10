@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\PasswordRecovery;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -22,6 +23,16 @@ class User extends Authenticatable
     protected $guard_name = 'web';
 
     protected $attributes = ['status' => 'active'];
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new PasswordRecovery($token));
+    }
+
+    public function managementRevision(): string
+    {
+        return hash_hmac('sha256', json_encode([$this->name, $this->email, $this->status, $this->password, $this->getRoleNames()->sort()->values()->all()], JSON_THROW_ON_ERROR), config('app.key'));
+    }
 
     public function assignedCustomers(): BelongsToMany
     {

@@ -21,6 +21,7 @@ import { useDebounced } from "@/hooks/use-debounced";
 import type { Appointment } from "@/types/appointments";
 import type { Person } from "@/types/crm";
 import type { CalendarRange } from "./calendar-view";
+import { AppointmentModal } from "./appointment-modal";
 const Calendar = dynamic(
   () => import("./calendar-view").then((m) => m.CalendarView),
   {
@@ -43,6 +44,7 @@ export function AppointmentsPage() {
   const term = useDebounced(search);
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
+  const [newAppointment, setNewAppointment] = useState<Partial<CalendarRange> | null>(null);
   const onRange = useCallback(
     (next: CalendarRange) =>
       setRange((old) =>
@@ -91,8 +93,8 @@ export function AppointmentsPage() {
               </Link>
             </Button>
             {manager && (
-              <Button asChild>
-                <Link href="/appointments/new">New appointment</Link>
+              <Button onClick={() => setNewAppointment({})}>
+                New appointment
               </Button>
             )}
           </div>
@@ -158,6 +160,7 @@ export function AppointmentsPage() {
             appointments={calendar.error ? [] : (calendar.data ?? [])}
             canManage={manager}
             onRange={onRange}
+            onCreate={setNewAppointment}
           />
           <p className="text-xs text-muted-foreground">
             Month, week and day views show all permitted appointments in the
@@ -265,6 +268,13 @@ export function AppointmentsPage() {
             />
           )}
         </section>
+      )}
+      {manager && newAppointment && (
+        <AppointmentModal
+          initialStart={newAppointment.start_at}
+          initialEnd={newAppointment.end_at}
+          onClose={() => setNewAppointment(null)}
+        />
       )}
     </div>
   );

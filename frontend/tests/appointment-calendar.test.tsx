@@ -73,6 +73,14 @@ it("configures month, week, and day views and disables staff editing", () => {
     expect.objectContaining({ right: "dayGridMonth,timeGridWeek,timeGridDay" }),
   );
 });
+it("opens creation with the selected calendar times without navigating", () => {
+  const onCreate = vi.fn();
+  setup(<CalendarView appointments={[]} canManage onRange={vi.fn()} onCreate={onCreate} />);
+  const select = props.current.select as (info: unknown) => void;
+  select({ start: new Date("2026-10-01T13:00:00Z"), end: new Date("2026-10-01T13:30:00Z"), allDay: false });
+  expect(onCreate).toHaveBeenCalledWith({ start_at: "2026-10-01T13:00:00Z", end_at: "2026-10-01T13:30:00Z" });
+  expect(push).not.toHaveBeenCalled();
+});
 it("reschedules a dropped event through the version-protected API", async () => {
   setup(
     <CalendarView appointments={[appointment]} canManage onRange={vi.fn()} />,

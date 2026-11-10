@@ -52,6 +52,7 @@ class WorkspaceNotificationTest extends CrmTestCase
 
     public function test_status_and_comments_notify_authorized_creator_once_and_omit_actor(): void
     {
+        $this->travelTo('2026-10-27 12:00:00');
         $manager = $this->signIn();
         $staff = $this->staff();
         $service = app(TaskService::class);
@@ -64,7 +65,7 @@ class WorkspaceNotificationTest extends CrmTestCase
         $this->postJson('/api/v1/tasks/'.$task->id.'/comments', ['comment' => 'Complete'])->assertCreated();
         $this->assertSame(2, $manager->notifications()->count());
         $this->assertSame(1, $staff->notifications()->count());
-        $this->assertSame(['task_status_changed', 'task_comment'], $manager->notifications()->oldest()->get()->map(fn ($n) => $n->data['kind'])->all());
+        $this->assertEqualsCanonicalizing(['task_status_changed', 'task_comment'], $manager->notifications()->get()->map(fn ($n) => $n->data['kind'])->all());
     }
 
     public function test_owned_reads_are_idempotent_and_read_all_is_isolated(): void

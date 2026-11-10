@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias(['active' => EnsureActiveUser::class, 'permission' => PermissionMiddleware::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontFlash(['token', 'current_password', 'password', 'password_confirmation']);
         $exceptions->shouldRenderJsonWhen(fn (Request $request) => $request->is('api/*') || $request->expectsJson());
         $exceptions->respond(function (Response $response): Response {
             if (request()->is('api/*') && $response->getStatusCode() >= 400) {

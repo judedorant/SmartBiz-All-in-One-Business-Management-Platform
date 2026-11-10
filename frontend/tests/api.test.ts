@@ -1,9 +1,56 @@
 import { it, expect, vi, afterEach } from "vitest";
 import { authApi } from "@/features/auth/api";
-import { request, ApiError } from "@/lib/api";
+import { request, ApiError, downloadCsv } from "@/lib/api";
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   document.cookie = "XSRF-TOKEN=; Max-Age=0";
+});
+it("downloads CSV using session cookies and releases its temporary link", async () => {
+  const fetcher = vi
+    .fn()
+    .mockResolvedValue(
+      new Response("Month,Amount\r\n2026-10,12.34", {
+        headers: { "Content-Type": "text/csv" },
+      }),
+    );
+  vi.stubGlobal("fetch", fetcher);
+  const createObjectURL = vi.fn().mockReturnValue("blob:test");
+  vi.stubGlobal(
+    "URL",
+    class extends URL {
+      static createObjectURL = createObjectURL;
+      static revokeObjectURL = vi.fn();
+    },
+  );
+  const click = vi
+    .spyOn(HTMLAnchorElement.prototype, "click")
+    .mockImplementation(() => {});
+  await downloadCsv("/reports/export?report=sales", "sales.csv");
+  expect(fetcher).toHaveBeenCalledWith(
+    "http://localhost:8000/api/v1/reports/export?report=sales",
+    expect.objectContaining({ credentials: "include", cache: "no-store" }),
+  );
+  expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+  expect(click).toHaveBeenCalledOnce();
+  expect(document.querySelector('a[download="sales.csv"]')).toBeNull();
+});
+it("surfaces export authorization failures instead of saving them as CSV", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({ message: "Unauthenticated." }, { status: 401 }),
+      ),
+  );
+  const click = vi
+    .spyOn(HTMLAnchorElement.prototype, "click")
+    .mockImplementation(() => {});
+  await expect(
+    downloadCsv("/reports/export?report=sales", "sales.csv"),
+  ).rejects.toMatchObject({ status: 401, message: "Unauthenticated." });
+  expect(click).not.toHaveBeenCalled();
 });
 it("sends cookie credentials and decoded CSRF token after bootstrapping login", async () => {
   document.cookie = "XSRF-TOKEN=csrf%3Dvalue";

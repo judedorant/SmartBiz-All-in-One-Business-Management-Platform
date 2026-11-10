@@ -1,3 +1,3 @@
 <?php
 
-return ['currencies' => ['USD', 'EUR', 'GBP'], 'default_currency' => 'USD'];
+return ['currencies' => ['USD', 'EUR', 'GBP', 'PHP'], 'default_currency' => 'USD'];

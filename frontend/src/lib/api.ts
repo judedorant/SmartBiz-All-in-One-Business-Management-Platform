@@ -55,6 +55,40 @@ export async function request<T>(
 export async function csrf() {
   await request<void>("/sanctum/csrf-cookie");
 }
+export async function downloadCsv(path: string, filename: string) {
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/api/v1${path}`, {
+      credentials: "include",
+      cache: "no-store",
+      headers: {
+        Accept: "text/csv, application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    });
+  } catch {
+    throw new ApiError(
+      "Cannot reach SmartBiz. Check that the API is running.",
+      0,
+    );
+  }
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new ApiError(
+      body.message ?? "The export could not be completed.",
+      response.status,
+      body.errors ?? {},
+    );
+  }
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 export async function api<T>(path: string, init?: RequestInit) {
   return (await request<Envelope<T>>(`/api/v1${path}`, init)).data;
 }

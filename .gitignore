@@ -1,6 +1,7 @@
 **/node_modules/
 **/vendor/
 **/.next/
+**/.next-qa/
 **/.env
 **/.env.*
 !**/.env.example

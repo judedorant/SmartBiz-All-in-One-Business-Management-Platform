@@ -14,10 +14,12 @@ export function CalendarView({
   appointments,
   canManage,
   onRange,
+  onCreate,
 }: {
   appointments: Appointment[];
   canManage: boolean;
   onRange: (range: CalendarRange) => void;
+  onCreate?: (range: CalendarRange) => void;
 }) {
   const router = useRouter();
   const move = useCrmWrite<{
@@ -89,6 +91,10 @@ export function CalendarView({
           if (info.allDay) {
             start.setHours(9, 0, 0, 0);
             end = new Date(start.valueOf() + 30 * 60000);
+          }
+          if (onCreate) {
+            onCreate({ start_at: isoSeconds(start), end_at: isoSeconds(end) });
+            return;
           }
           router.push(
             `/appointments/new?${new URLSearchParams({ start: isoSeconds(start), end: isoSeconds(end) })}`,

@@ -17,10 +17,14 @@ export function AppointmentForm({
   appointment,
   initialStart,
   initialEnd,
+  onSaved,
+  onCancel,
 }: {
   appointment?: Appointment;
   initialStart?: string;
   initialEnd?: string;
+  onSaved?: (appointment: Appointment) => void;
+  onCancel?: () => void;
 }) {
   const [initial] = useState(appointment);
   const router = useRouter();
@@ -70,7 +74,7 @@ export function AppointmentForm({
         },
       ),
     "Appointment saved",
-    (data) => router.push(`/appointments/${data.id}`),
+    (data) => onSaved ? onSaved(data) : router.push(`/appointments/${data.id}`),
   );
   async function submit(values: AppointmentValues) {
     try {
@@ -199,7 +203,7 @@ export function AppointmentForm({
           type="button"
           variant="outline"
           onClick={() =>
-            router.push(
+            onCancel ? onCancel() : router.push(
               initial ? `/appointments/${initial.id}` : "/appointments",
             )
           }
